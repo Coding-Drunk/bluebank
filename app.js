@@ -502,13 +502,32 @@ function callBankAPI(accountId) {
 function createQrCode(sellerID, amountToSend) {
   	console.log('inside createQrCode');
   	//var queryUrl = 'https://bluebank.azure-api.net/api/v0.6.3/accounts/' + sellerID +'/payments?amount='+amountToSend;
-  	var queryUrl = "{url:'https://bluebank.azure-api.net/api/v0.6.3/accounts/', seller:"+sellerID+", amount:"+amountToSend+"}";
+  	var queryUrl = "{seller:"+sellerID+", amount:"+amountToSend+"}";
 
  	var qr_png = qr.image(queryUrl, {type: 'png' });
 	qr_png.pipe(require('fs').createWriteStream('public/img/qrcode'+sellerID+'.png'));
 	console.log('generated qrcode name:qrcode'+sellerID+'.png');
  }
 
+/* function decodeQrCode() {
+  //get this from messageAttachments
+  var imag_url = 'http://api.qrserver.com/v1/read-qr-code/?fileurl=https://hellopanpan.azurewebsites.net/img/qrcode58a1737f06d0f9e7189d1db7.png'; 
+
+ request({
+    uri: imag_url
+  }, function (error, response, body) {
+     if (!error && response.statusCode == 200) {
+      var resp = JSON.parse(body);  
+      var full_url = resp[0]['symbol'][0]['data'];
+    var qrcode_img = ;
+    
+      console.log("aqui "+ qrcode_img);
+  }
+  }); 
+}
+
+decodeQrCode();
+*/
 function sendImageMessage(recipientId) {
   var messageData = {
     recipient: {
