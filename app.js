@@ -233,8 +233,7 @@ function receivedMessage(event) {
     }
   } else if (messageAttachments) {
 console.log('received attachment');
-    if (mm(messageAttachments[0].url, "https://l.facebook.com/l.php?*www.bing.com%2Fmaps*") &&  messageAttachments[0]
-    	&&  messageAttachments[0].payload &&  messageAttachments[0].payload.coordinates) {
+    if (messageAttachments[0] &&  messageAttachments[0].payload &&  messageAttachments[0].payload.coordinates && mm(messageAttachments[0].url, "https://l.facebook.com/l.php?*www.bing.com%2Fmaps*") ) {
       sendTextMessage(senderID, "querying nearest ATMs");
       var latitude = messageAttachments[0].payload.coordinates.lat.toString();
       var longitude = messageAttachments[0].payload.coordinates.long.toString();
