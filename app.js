@@ -145,6 +145,7 @@ function receivedMessage(event) {
 
       var paymentReference = "received " + transactionAmount + " GBP from " + users[senderID]["givenName"] + " " + users[senderID]["familyName"];
       var serverFeedbackToUser = "Your request to send " + transactionAmount + " GBP has been received.";
+      console.log("Send money with params: ", senderID, recipientAccountNoStr, transactionAmount, paymentReference, serverFeedbackToUser);
       sendMoney(senderID, recipientAccountNoStr, transactionAmount, paymentReference, serverFeedbackToUser);
 
       return;
