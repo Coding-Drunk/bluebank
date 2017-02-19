@@ -761,6 +761,7 @@ console.log('json from image'+transactionsInfo);
       var paymentReference = "received " + transactionsInfo.amount + " from " + users[senderID]["givenName"];
 console.log('payment'+paymentReference);      
       var serverFeedbackToUser = "Successfully sent " + transactionsInfo.amount + " to account : " + transactionsInfo.seller;
+      console.log("Send QR money with params: ", senderID, transactionsInfo.seller, transactionsInfo.amount, paymentReference, serverFeedbackToUser);
       sendMoney(senderID, transactionsInfo.seller, transactionsInfo.amount, paymentReference, serverFeedbackToUser);
 
   }else{
