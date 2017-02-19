@@ -701,7 +701,7 @@ function callBankAPI(accountId) {
 function createQrCode(sellerID, amountToSend) {
   	console.log('inside createQrCode');
   	//var queryUrl = 'https://bluebank.azure-api.net/api/v0.6.3/accounts/' + sellerID +'/payments?amount='+amountToSend;
-  	var queryUrl = "{seller:"+sellerID+", amount:"+amountToSend+"}";
+  	var queryUrl = '{"seller":'+sellerID+', "amount":'+amountToSend+'}';
 
  	var qr_png = qr.image(queryUrl, {type: 'png' });
 	qr_png.pipe(require('fs').createWriteStream('public/img/qrcode.png'));
