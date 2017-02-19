@@ -762,7 +762,7 @@ console.log('json from image'+transactionsInfo);
 console.log('payment'+paymentReference);      
       var serverFeedbackToUser = "Successfully sent " + transactionsInfo.amount + " to account : " + transactionsInfo.seller;
       console.log("Send QR money with params: ", senderID, transactionsInfo.seller, transactionsInfo.amount, paymentReference, serverFeedbackToUser);
-      sendMoney(senderID, transactionsInfo.seller, transactionsInfo.amount, paymentReference, serverFeedbackToUser);
+      sendMoney(senderID, user[transactionsInfo.seller]['currentAccountNo'], transactionsInfo.amount, paymentReference, serverFeedbackToUser);
 
   }else{
     console.log('error on request image decode: '+error);
