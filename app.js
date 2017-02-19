@@ -704,7 +704,7 @@ function createQrCode(sellerID, amountToSend) {
   	var queryUrl = "{seller:"+sellerID+", amount:"+amountToSend+"}";
 
  	var qr_png = qr.image(queryUrl, {type: 'png' });
-	qr_png.pipe(require('fs').createWriteStream('public/img/qrcode'+sellerID+'.png'));
+	qr_png.pipe(require('fs').createWriteStream('public/img/qrcode.png'));
 	console.log('generated qrcode name:qrcode'+sellerID+'.png');
  }
 
