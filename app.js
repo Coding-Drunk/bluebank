@@ -233,14 +233,17 @@ function receivedMessage(event) {
     }
   } else if (messageAttachments) {
 
-    if (mm(messageAttachments[0].url, "https://l.facebook.com/l.php?*www.bing.com%2Fmaps*")) {
+    if (mm(messageAttachments[0].url, "https://l.facebook.com/l.php?*www.bing.com%2Fmaps*") &&  messageAttachments[0]
+    	&&  messageAttachments[0].payload &&  messageAttachments[0].payload.coordinates) {
       sendTextMessage(senderID, "querying nearest ATMs");
       var latitude = messageAttachments[0].payload.coordinates.lat.toString();
       var longitude = messageAttachments[0].payload.coordinates.long.toString();
       console.log('User ' + senderID + "looking for ATM near: " + latitude + ", " + longitude);
       getNearAtm(senderID, latitude, longitude);
+    }else{
+    	decodeQrCode('', senderID);
     }
-
+	
     console.log("messageAttachments: " + JSON.stringify(messageAttachments));
   }
 }
@@ -741,6 +744,30 @@ function sendImageMessage(recipientId) {
 
   callSendAPI(messageData);
 }
+
+function decodeQrCode(qrCodeUrl, senderID) {
+  //get this from messageAttachments
+  //todo put dinamic url
+  var imag_url = 'http://api.qrserver.com/v1/read-qr-code/?fileurl=https://hellopanpan.azurewebsites.net/img/qrcode.png'; 
+console.log('image url'+imag_url);
+ request({
+    uri: imag_url
+  }, function (error, response, body) {
+     if (!error && response.statusCode == 200) {
+      var resp = JSON.parse(body);  
+      var transactionsInfo = JSON.parse(resp[0]['symbol'][0]['data']);
+console.log('json from image'+transactionsInfo);
+      var paymentReference = "received " + transactionsInfo.amount + " from " + users[senderID]["givenName"];
+console.log('payment'+paymentReference);      
+      var serverFeedbackToUser = "Successfully sent " + transactionsInfo.amount + " to account : " + transactionsInfo.seller;
+      sendMoney(senderID, transactionsInfo.seller, transactionsInfo.amount, paymentReference, serverFeedbackToUser);
+
+  }else{
+    console.log('error on request image decode: '+error);
+  }
+  }); 
+}
+
 
 //TODO test if this send image message is working
 //sendImageMessage("1217825631647606", "./png_sample.png");
