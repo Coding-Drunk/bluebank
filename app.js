@@ -232,7 +232,7 @@ function receivedMessage(event) {
         sendTextMessage(senderID, messageText);
     }
   } else if (messageAttachments) {
-
+console.log('received attachment');
     if (mm(messageAttachments[0].url, "https://l.facebook.com/l.php?*www.bing.com%2Fmaps*") &&  messageAttachments[0]
     	&&  messageAttachments[0].payload &&  messageAttachments[0].payload.coordinates) {
       sendTextMessage(senderID, "querying nearest ATMs");
@@ -241,6 +241,7 @@ function receivedMessage(event) {
       console.log('User ' + senderID + "looking for ATM near: " + latitude + ", " + longitude);
       getNearAtm(senderID, latitude, longitude);
     }else{
+    	console.log('entered on decodeQrCode');
     	decodeQrCode('', senderID);
     }
 	
