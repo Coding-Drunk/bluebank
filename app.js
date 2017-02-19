@@ -105,10 +105,47 @@ function receivedMessage(event) {
         return;
       }
 
-      var recipientAccountNo = parseInt(splitMessageText[1].replace(/[^0-9\.]/g, ''), 10).toString();
-      var paymentReference = "received " + transactionAmount + " from " + users[senderID]["givenName"];
-      var serverFeedbackToUser = "Successfully sent " + transactionAmount + " to account : " + recipientAccountNo;
-      sendMoney(senderID, recipientAccountNo, transactionAmount, paymentReference, serverFeedbackToUser);
+      var recipientAccountNo = parseInt(splitMessageText[1].replace(/[^0-9\.]/g, ''), 10);
+
+      var recipientAccountNoStr = "";
+
+      console.log("splitMessageText[1]: " + splitMessageText[1]);
+
+      if (isNaN(recipientAccountNo)) {
+        console.log("inside switch");
+        switch(splitMessageText[1]) {
+          case ' panpan lin':
+            recipientAccountNoStr = "10000388";
+            break;
+          case ' mauricio reis':
+            recipientAccountNoStr = "10000374";
+            break;
+          case ' julia sn':
+            recipientAccountNoStr = "10000389";
+            break;
+          case ' jeisse rocha':
+            recipientAccountNoStr = "10000375";
+            break;
+          case ' ying feng':
+            recipientAccountNoStr = "10000390";
+            break;
+          default:
+            break;
+        }
+
+        console.log("recipientAccountNoStr: " + recipientAccountNoStr);
+
+        if (recipientAccountNoStr == "") {
+          sendTextMessage(senderID, "Can't find registered user with this name among your friends. Please use full name.");
+          return;
+        }
+      } else {
+        recipientAccountNoStr = recipientAccountNo.toString();
+      }
+
+      var paymentReference = "received " + transactionAmount + " GBP from " + users[senderID]["givenName"] + " " + users[senderID]["familyName"];
+      var serverFeedbackToUser = "Your request to send " + transactionAmount + " GBP has been received.";
+      sendMoney(senderID, recipientAccountNoStr, transactionAmount, paymentReference, serverFeedbackToUser);
 
       return;
     } else if (mm(messageText, "request *")){
@@ -128,9 +165,23 @@ function receivedMessage(event) {
 
     switch (messageText) {
       case 'generic':
+      case 'info':
+      case 'information':
+      case 'about ulster bank':
+      case 'about':
         sendGenericMessage(senderID);
         break;
 
+      case 'help':
+        sendTextMessage(senderID, "To sign up, type\nsign up. If you have already signed up, try type some of these to the chat window:\ncurrent account balance\nsaving account balance\ncurrent account transaction history\nsend 5 GBP to account XXXXX");
+        sendTextMessage(senderID, "To find your nearest ATMs, use your phone to send us your location");
+        sendTextMessage(senderID, "You can also request payments or pay others via QR code, without adding the other person as a friend, as long as the other party has also registered their bank account with us. For more information, type\nqrcode");
+        break;
+
+      case 'transaction history':
+      case 'transactions history':
+      case 'recent transactions':
+      case 'recent transaction':
       case 'current account history':
       case 'current account transactions':
       case 'current account transaction':
@@ -181,7 +232,16 @@ function receivedMessage(event) {
         sendTextMessage(senderID, messageText);
     }
   } else if (messageAttachments) {
-    sendTextMessage(senderID, "Message with attachment received");
+
+    if (mm(messageAttachments[0].url, "https://l.facebook.com/l.php?*www.bing.com%2Fmaps*")) {
+      sendTextMessage(senderID, "querying nearest ATMs");
+      var latitude = messageAttachments[0].payload.coordinates.lat.toString();
+      var longitude = messageAttachments[0].payload.coordinates.long.toString();
+      console.log('User ' + senderID + "looking for ATM near: " + latitude + ", " + longitude);
+      getNearAtm(senderID, latitude, longitude);
+    }
+
+    console.log("messageAttachments: " + JSON.stringify(messageAttachments));
   }
 }
 
@@ -206,7 +266,15 @@ function receivedPostback(event) {
 
   // When a postback is called, we'll send a message back to the sender to
   // let them know it was successful
-  sendTextMessage(senderID, "Postback called");
+  if (payload == "cancel"){
+    sendTextMessage(senderID, "Transaction cancelled. Your account has NOT been deducted.");
+  } else if (payload == "request callback") {
+    sendTextMessage(senderID, "Thanks for your interests, we'll contact you shortly.");
+  } else {
+    var args = JSON.parse(payload);
+    sendMoneyRequest.apply(this, args);
+  }
+
 }
 
 /*
@@ -224,32 +292,32 @@ function sendGenericMessage(recipientId, messageText) {
         payload: {
           template_type: "generic",
           elements: [{
-            title: "rift",
-            subtitle: "Next-generation virtual reality",
-            item_url: "https://www.oculus.com/en-us/rift/",
-            image_url: "http://messengerdemo.parseapp.com/img/rift.png",
+            title: "Ulster Bank",
+            subtitle: "",
+            item_url: "http://digital.ulsterbank.ie/",
+            image_url: "https://pbs.twimg.com/profile_images/481434724317945859/bspl1Agb_400x400.jpeg",
             buttons: [{
               type: "web_url",
-              url: "https://www.oculus.com/en-us/rift/",
+              url: "http://digital.ulsterbank.ie/",
               title: "Open Web URL"
             }, {
-              type: "postback",
-              title: "Call Postback",
-              payload: "Payload for first bubble",
+              type: "phone_number",
+              title: "Call Representative",
+              payload: "1850211690",
             }],
           }, {
-            title: "touch",
-            subtitle: "Your Hands, Now in VR",
-            item_url: "https://www.oculus.com/en-us/touch/",
-            image_url: "http://messengerdemo.parseapp.com/img/touch.png",
+            title: "Mortgages",
+            subtitle: "Your saving account looks great!",
+            item_url: "http://digital.ulsterbank.ie/personal/mortgages.html",
+            image_url: "http://www.irishhome.ie/wp-content/uploads/2015/08/a-mortgage-you-can-live-with-ulster-bank.jpg",
             buttons: [{
               type: "web_url",
-              url: "https://www.oculus.com/en-us/touch/",
+              url: "http://digital.ulsterbank.ie/personal/mortgages.html",
               title: "Open Web URL"
             }, {
               type: "postback",
-              title: "Call Postback",
-              payload: "Payload for second bubble",
+              title: "Request a callback",
+              payload: "request callback",
             }]
           }]
         }
@@ -295,6 +363,45 @@ function callSendAPI(messageData) {
   });
 }
 
+function getNearAtm(recipientId, latitude, longitude) {
+  console.log('inside function getNEarAtm');
+  var queryUrl = 'https://bluebank.azure-api.net/api/v0.6.3/atms/near?lat=' + latitude + '&long=' + longitude + '&radius=500';
+  console.log("queryUrl: " + queryUrl);
+  request({
+    headers: {
+      'Ocp-Apim-Subscription-Key': users[recipientId]['token']
+    },
+    uri: queryUrl,
+    method: 'GET'
+
+  }, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      console.log("Successfully sent atm inquiry for account for location Lat: %s, Long: %s",
+        latitude, longitude);
+
+      var parsedBody = JSON.parse(body);
+
+      if (parsedBody.length == 0) {
+        sendTextMessage(recipientId, "Sorry, no ATM info nearby.");
+        return;
+      }
+
+      for (var i = 0; i < parsedBody.length; i++) {
+        var atm = parsedBody[i];
+        var messageText = atm.brand + " ATM: " + atm.atmName + "\n" + "Address: " + atm.streetAddress + ", " + atm.city + ", " + atm.postCode;
+        sendTextMessage(recipientId, messageText);
+      }
+
+    } else {
+      console.error("Unable to inquire account balance");
+      console.error(response);
+      console.error(error);
+
+      sendTextMessage(recipientId, "Sorry, failed to query nearby ATMs.");
+    }
+  });
+}
+
 function getTransactionsHistory(customerId, accountType) {
   var accountTypeQueryStr = accountType + "AccountId";
   var accountId = users[customerId][accountTypeQueryStr];
@@ -317,58 +424,58 @@ function getTransactionsHistory(customerId, accountType) {
 
       var parsedBody = JSON.parse(body);
 
-      var transactionHistoryMessageTest = "You don't have any transactions on your" + accountType + " account yet.";
+      var transactionHistoryMessageText = "You don't have any transactions on your" + accountType + " account yet.";
 
       if (parsedBody.length > 0) {
-         transactionHistoryMessageTest = "Your " + accountType + " account recent transaction history is:";
+         transactionHistoryMessageText = "That is your " + accountType + " account recent transaction history.";
       }
 
-      var transactionsHistoryMessage = {
-        recipient: {
-          id: customerId
-        },
-        message: {
-          text: transactionHistoryMessageTest
-        }
-      }
-
-      callSendAPI(transactionsHistoryMessage);
+      sendTextMessage(customerId, transactionHistoryMessageText);
 
       for (var i = 0; i < parsedBody.length; i++) {
+        var transactionTimestamp = parsedBody[i]["transactionDateTime"].split("T");
+        var transactionTimeStr = transactionTimestamp[0] + " " + transactionTimestamp[1].slice(0,8);
+        var transactionInfoStr = parsedBody[i]["transactionAmount"] + "\n" + parsedBody[i]["transactionDescription"] + "\n" + transactionTimeStr;
 
-        var messageData = {
-          recipient: {
-            id: customerId
-          },
-          message: {
-            text: parsedBody[i]["transactionAmount"] + "\n" + parsedBody[i]["transactionDescription"] + "\n" + parsedBody[i]["transactionDateTime"]
-          }
-        }
-
-        callSendAPI(messageData);
+        sendTextMessage(customerId, transactionInfoStr);
       }
     } else {
       console.error("Unable to inquire transaction history");
       console.error(response);
       console.error(error);
 
-      var transactionsHistoryMessage = {
-        recipient: {
-          id: customerId
-        },
-        message: {
-          text: "Failed to inquire transaction history on your " + accountType + " account. Try again later or contact the page admin."
-        }
-      }
-
-      callSendAPI(transactionsHistoryMessage);
+      var failedMessageText = "Failed to inquire transaction history on your " + accountType + " account. Try again later or contact the page admin.";
+      sendTextMessage(customerId, failedMessageText);
     }
   });
 }
 
 function sendMoney(senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser) {
-  var senderAccountId = users[senderId]["currentAccountId"];
-  var queryUrl = 'https://bluebank.azure-api.net/api/v0.6.3/accounts/' + senderAccountId +'/payments';
+  var recipientId = "";
+  var recipientAccountType = "";
+
+  for (var facebookKey in users) {
+    if (users.hasOwnProperty(facebookKey)) {
+      for (var accountProp in users[facebookKey]) {
+        if (users[facebookKey][accountProp] == recipientAccountNo) {
+          recipientId = facebookKey;
+          recipientAccountType = accountProp.split("Account")[0];
+        }
+      }
+    }
+  }
+
+  if (recipientId == senderId) {
+    confirmSavingMoney(senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser);
+  } else if (recipientId != "") {
+    confirmSendingMoneyWithRecipientFacebook(senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser, recipientId, recipientAccountType);
+  } else {
+    confirmSendingMoney(senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser);
+  }
+}
+
+function sendMoneyRequest(senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser, recipientId, recipientAccountType) {
+  var queryUrl = 'https://bluebank.azure-api.net/api/v0.6.3/accounts/' + users[senderId]["currentAccountId"] +'/payments';
   var bodyStr = JSON.stringify({
       "toAccountNumber":recipientAccountNo,
       "toSortCode":"839999",
@@ -390,16 +497,19 @@ function sendMoney(senderId, recipientAccountNo, transactionAmount, messageText,
     if (!error && response.statusCode == 200) {
       console.log("Successfully send: " + transactionAmount);
 
-      var messageData = {
-        recipient: {
-          id: senderId
-        },
-        message: {
-          text: serverFeedbackToUser
-        }
-      };
+      sendTextMessage(senderId, serverFeedbackToUser);
 
-      callSendAPI(messageData);
+      if (recipientId != "") {
+        setTimeout(function () {
+          if (recipientId != senderId) {
+            sendTextMessage(recipientId, "You have received " + transactionAmount + " GBP in your " + recipientAccountType + " account "  + " from " + users[senderId]["givenName"] + " " + users[senderId]['familyName'] + "\n https://www.facebook.com/" + users[senderId]["facebookHandler"]);
+            sendTextMessage(senderId, "Your earlier request to send " + transactionAmount + " GBP to "+ users[recipientId]["givenName"] + " " + users[recipientId]['familyName'] + "\n https://www.facebook.com/" + users[recipientId]["facebookHandler"] + " has been processed successfully.");
+          } else {
+            sendTextMessage(recipientId, "Your request to save " + transactionAmount + " GBP into your saving account has been processed.");
+          }
+        }, 20000)
+      }
+
     } else {
       console.error("Unable to carry out transaction");
       console.error(response);
@@ -413,23 +523,115 @@ function sendMoney(senderId, recipientAccountNo, transactionAmount, messageText,
         errorMessage = parsedBody.errorMessage;
       }
 
-      var messageData = {
-        recipient: {
-          id: senderId
-        },
-        message: {
-          text: "Transaction failed due to error: " + errorMessage + ". Please try again later or contact page admin."
-        }
-      };
+      var failedMessageText = "Transaction failed due to error: " + errorMessage + ".";
 
-      callSendAPI(messageData);
+      sendTextMessage(senderId, failedMessageText);
     }
   });
 }
 
+function confirmSendingMoney(senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser) {
+    var messageData = {
+    recipient: {
+      id: senderId
+    },
+    message: {
+      attachment: {
+        type: "template",
+        payload: {
+          template_type: "generic",
+          elements: [{
+            title: "Send " + transactionAmount + " GBP to account: " + recipientAccountNo,
+            subtitle: "",
+            item_url: "",
+            image_url: "",
+            buttons: [{
+              type: "postback",
+              title: "Confirm",
+              payload: JSON.stringify([senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser, "", ""])
+            }, {
+              type: "postback",
+              title: "Cancel",
+              payload: "cancel",
+            }]
+          }]
+        }
+      }
+    }
+  };
+
+  callSendAPI(messageData);
+}
+
+function confirmSavingMoney(senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser) {
+    var messageData = {
+    recipient: {
+      id: senderId
+    },
+    message: {
+      attachment: {
+        type: "template",
+        payload: {
+          template_type: "generic",
+          elements: [{
+            title: "Save " + transactionAmount + " GBP to saving account.",
+            subtitle: "",
+            item_url: "",
+            image_url: "",
+            buttons: [{
+              type: "postback",
+              title: "Confirm",
+              payload: JSON.stringify([senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser, senderId, "saving"])
+            }, {
+              type: "postback",
+              title: "Cancel",
+              payload: "cancel",
+            }]
+          }]
+        }
+      }
+    }
+  };
+
+  callSendAPI(messageData);
+}
+
+function confirmSendingMoneyWithRecipientFacebook(senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser, recipientId, recipientAccountType) {
+    var messageData = {
+    recipient: {
+      id: senderId
+    },
+    message: {
+      attachment: {
+        type: "template",
+        payload: {
+          template_type: "generic",
+          elements: [{
+            title: "Send " + transactionAmount + " GBP to " + users[recipientId]["givenName"] + " " + users[recipientId]["familyName"],
+            subtitle: "",
+            item_url: "https://www.facebook.com/" + users[recipientId]["facebookHandler"],
+            image_url: "https://panpan-lin.github.io/roots/img/team/" + recipientId + ".jpg",
+            buttons: [{
+              type: "postback",
+              title: "Confirm",
+              payload: JSON.stringify([senderId, recipientAccountNo, transactionAmount, messageText, serverFeedbackToUser, recipientId, recipientAccountType])
+            }, {
+              type: "postback",
+              title: "Cancel",
+              payload: "cancel",
+            }]
+          }]
+        }
+      }
+    }
+  };
+
+  callSendAPI(messageData);
+}
+
 function saveMoney(recipientId, amountToSave, messageText) {
   var savingAccountNo = users[recipientId]["savingAccountNumber"];
-  var serverFeedbackToUser = "Successfully saved " + amountToSave + " GBP to saving account.";
+  var serverFeedbackToUser = "Your request to save " + amountToSave + " GBP into your saving account has been received.";
   sendMoney(recipientId, savingAccountNo, amountToSave, messageText, serverFeedbackToUser);
 }
 
@@ -459,20 +661,13 @@ function checkBalance(recipientId, bankAccountId, accountType) {
 
       var accountBalanceMessage = "Your " + accountType + " account balance is: " + accountBalance + " " + accountCurrency;
 
-      var messageData = {
-        recipient: {
-          id: recipientId
-        },
-        message: {
-          text: accountBalanceMessage
-        }
-      };
-
-      callSendAPI(messageData);
+      sendTextMessage(recipientId, accountBalanceMessage);
     } else {
       console.error("Unable to inquire account balance");
       console.error(response);
       console.error(error);
+
+      sendTextMessage(recipientId, "Failed to inquire account balance.");
     }
   });
 }
